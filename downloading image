@@ -1,0 +1,22 @@
+# Download and process image
+s3 = boto3.client('s3')
+img_obj = s3.get_object(Bucket=bucket, Key=key)
+img = Image.open(io.BytesIO(img_obj['Body'].read()))
+
+# Resize to thumbnail
+img.thumbnail((128, 128))
+
+# Save processed image
+buf = io.BytesIO()
+img.save(buf, format='JPEG')
+buf.seek(0)
+
+# Upload to output bucket
+s3.put_object(
+    Bucket='cloudvision-output',
+    Key=f'thumbnail/{key}',
+    Body=buf,
+    ContentType='image/jpeg'
+)
+
+return {'statusCode': 200, 'body': 'Image processed successfully'}
